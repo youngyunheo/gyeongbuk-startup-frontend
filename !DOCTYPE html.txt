@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>경북 창업 통합 플랫폼</title>
+    <style>
+        /* 기본 페이지 및 폰트 스타일 */
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        /* 중앙 정렬 컨테이너 박스 */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        /* 검색창 레이아웃 */
+        .search-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+        }
+        .search-container input {
+            width: 350px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        /* 테이블 스타일 */
+        .notice-board {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .notice-board th, .notice-board td {
+            border: 1px solid #ddd;
+            padding: 12px;
+        }
+        .notice-board th {
+            background-color: #0056b3;
+            color: white;
+            text-align: center;
+        }
+        .notice-board tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .notice-board tr:hover {
+            background-color: #f1f1f1;
+        }
+        /* 버튼 스타일 */
+        .btn-link {
+            display: inline-block;
+            padding: 6px 12px;
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 13px;
+            text-align: center;
+        }
+        .btn-link:hover {
+            background-color: #004494;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>경북 지역 창업 지원 공지사항 통합 안내</h1>
+    
+    <!-- 검색 필터링 영역 -->
+    <div class="search-container">
+        <input 
+            type="text" 
+            id="noticeSearchInput" 
+            placeholder="기관명 또는 공고 키워드 입력 (예: 이차전지, 보증)" 
+        >
+    </div>
+
+    <!-- 창업 공지사항 테이블 -->
+    <table class="notice-board">
+        <thead>
+            <tr>
+                <th style="width: 20%;">기관명</th>
+                <th style="width: 50%;">지원사업 및 공지 제목</th>
+                <th style="width: 15%;">등록일</th>
+                <th style="width: 15%;">원문 링크</th>
+            </tr>
+        </thead>
+        <tbody id="notice-list-body">
+            <!-- 초기 로딩 메시지 -->
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 20px;">
+                    데이터를 불러오는 중입니다...<br>
+                    <small style="color: #666;">(현재 백엔드 서버 연결 대기 중)</small>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    /**
+     * 1. 백엔드(FastAPI) 데이터 비동기 호출 및 화면 렌더링 로직
+     */
+    async function fetchAndRenderNotices() {
+        const apiUrl = 'http://127.0.0.1:8000/api/notices'; 
+        const tbody = document.getElementById('notice-list-body');
+
+        try {
+            const response = await fetch(apiUrl);
+            
+            if (!response.ok) {
+                throw new Error('HTTP 통신 에러 발생: ' + response.status);
+            }
+
+            const data = await response.json();
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">등록된 창업 지원 공고가 없습니다.</td></tr>';
+                return;
+            }
+
+            data.forEach(notice => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="text-align: center; font-weight: bold; color: #555;">${notice.agency_name}</td>
+                    <td>
+                        <a href="${notice.link}" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: #333; font-weight: bold;">
+                            ${notice.title}
+                        </a>
+                    </td>
+                    <td style="text-align: center;">${notice.reg_date}</td>
+                    <td style="text-align: center;">
+                        <a href="${notice.link}" target="_blank" rel="noopener noreferrer" class="btn-link">상세보기</a>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+        } catch (error) {
+            console.warn('백엔드 서버 미연결 상태. UI 테스트용 모의 데이터를 렌더링함.', error);
+            // 백엔드가 꺼져있을 때 검색 및 UI 테스트를 위한 가상 데이터 표출
+            tbody.innerHTML = `
+                <tr>
+                    <td style="text-align: center; font-weight: bold; color: #555;">경북테크노파크</td>
+                    <td><a href="#" style="text-decoration: none; color: #333; font-weight: bold;">2026년 경북 이차전지 리사이클링 상용화 기술 지원 공고</a></td>
+                    <td style="text-align: center;">2026-11-17</td>
+                    <td style="text-align: center;"><a href="#" class="btn-link">상세보기</a></td>
+                </tr>
+                <tr>
+                    <td style="text-align: center; font-weight: bold; color: #555;">경북창조경제혁신센터</td>
+                    <td><a href="#" style="text-decoration: none; color: #333; font-weight: bold;">친환경 설비 분야 초기창업패키지 모집 안내</a></td>
+                    <td style="text-align: center;">2026-11-16</td>
+                    <td style="text-align: center;"><a href="#" class="btn-link">상세보기</a></td>
+                </tr>
+                <tr>
+                    <td style="text-align: center; font-weight: bold; color: #555;">기술보증기금</td>
+                    <td><a href="#" style="text-decoration: none; color: #333; font-weight: bold;">벤처기업 혁신성장 지원 특별보증 (최대 100억)</a></td>
+                    <td style="text-align: center;">2026-11-15</td>
+                    <td style="text-align: center;"><a href="#" class="btn-link">상세보기</a></td>
+                </tr>
+            `;
+        }
+    }
+
+    /**
+     * 2. 실시간 키워드 필터링 로직 (검색창 입력 이벤트)
+     */
+    document.getElementById('noticeSearchInput').addEventListener('input', function(event) {
+        const keyword = event.target.value.toLowerCase().trim();
+        const tbody = document.getElementById('notice-list-body');
+        const rows = tbody.getElementsByTagName('tr');
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            
+            // 데이터가 없는 기본 안내 셀 등은 검사에서 제외
+            if (row.cells.length < 4) continue;
+
+            const agencyName = row.cells[0].textContent.toLowerCase();
+            const titleText = row.cells[1].textContent.toLowerCase();
+
+            // 기관명이나 공고 제목에 키워드가 포함되어 있으면 표출, 아니면 숨김
+            if (agencyName.includes(keyword) || titleText.includes(keyword)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    });
+
+    // 브라우저 렌더링 직후 데이터 로드 실행
+    document.addEventListener('DOMContentLoaded', fetchAndRenderNotices);
+</script>
+</body>
+</html>
